@@ -1,5 +1,7 @@
 # Student Registration & Academic Portal (Super Admin & Fee Permission System)
 
+Note:   if need its Data Base contact me I will provide it and its for the evets registration 
+
 A dedicated, standalone Laravel application for student registration, convocation fee challan vouchers, and **Super Admin Fee Permission & Verification Control**.
 
 ---
