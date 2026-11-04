@@ -286,6 +286,51 @@
                 </div>
             </div>
         </div>
+
+        <!-- Convocation Focal Persons & Quick Links Bar -->
+        <div class="card border-0 shadow-sm mb-4" style="border: 1px solid #dde3e8; border-radius: 10px;">
+            <div class="card-header bg-white pb-2 pt-3 border-0 d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <div>
+                    <h5 class="fw-bold text-dark mb-0">
+                        <i class="material-symbols-rounded align-middle me-1" style="color: #0b4f6c;">support_agent</i>
+                        Convocation Focal Persons (Student Helplines)
+                    </h5>
+                    <small class="text-muted text-xs">These official contacts are shown on the student portal, registration form, and printable fee vouchers</small>
+                </div>
+                <a href="{{ route('admin.settings') }}#focal_persons_card" class="btn btn-sm text-white mb-0" style="background: #0b4f6c;">
+                    <i class="fa fa-pencil-alt me-1"></i> Add / Edit Focal Persons
+                </a>
+            </div>
+            <div class="card-body pt-2 pb-3">
+                @if(!empty($convocationFocalPersons) && count($convocationFocalPersons) > 0)
+                    <div class="row g-3">
+                        @foreach($convocationFocalPersons as $fp)
+                            <div class="col-md-6 col-lg-4">
+                                <div class="p-3 border rounded bg-light d-flex align-items-center justify-content-between">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="avatar avatar-sm rounded-circle d-flex align-items-center justify-content-center text-white" style="background: #0b4f6c;">
+                                            <i class="fa fa-user-tie"></i>
+                                        </div>
+                                        <div>
+                                            <strong class="d-block text-dark text-xs mb-0">{{ $fp->name }}</strong>
+                                            <small class="text-muted text-xxs d-block">{{ $fp->designation }}</small>
+                                            <a href="tel:{{ $fp->mobile }}" class="text-primary font-monospace fw-bold text-xxs text-decoration-none">
+                                                <i class="fa fa-phone-alt text-success me-1"></i> {{ $fp->mobile }}
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <span class="badge text-xxs" style="background: #e3f3ea; color: #17693f; border: 1px solid #b8e2cb;">Active</span>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="text-center py-3 text-muted text-xs">
+                        No focal persons configured yet. <a href="{{ route('admin.settings') }}#focal_persons_card" class="fw-bold text-primary">Click here to add</a>.
+                    </div>
+                @endif
+            </div>
+        </div>
     </div>
 
 @endsection

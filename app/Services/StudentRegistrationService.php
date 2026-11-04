@@ -66,7 +66,7 @@ class StudentRegistrationService
         }
 
         if (!is_array($positionsData) || empty($positionsData)) {
-            return $fallback;
+            return ($fallback && $fallback !== '0 (No Positions)') ? $fallback : '0';
         }
 
         $summaryParts = [];
@@ -79,20 +79,23 @@ class StudentRegistrationService
                 $position = '1st Position';
             }
 
-            $desc = [];
-            if (!empty($position)) {
-                $desc[] = $position;
+            // If 0, None, or empty, do not include in active distinctions
+            if (empty($position) || $position === '0' || strtolower($position) === 'none') {
+                continue;
             }
+
+            $desc = [];
+            $desc[] = $position;
             if (!empty($subject)) {
                 $desc[] = 'Subject: ' . $subject;
             }
 
-            if (!empty($profName) && !empty($desc)) {
+            if (!empty($profName)) {
                 $summaryParts[] = $profName . ' (' . implode(', ', $desc) . ')';
             }
         }
 
-        return !empty($summaryParts) ? implode('; ', $summaryParts) : $fallback;
+        return !empty($summaryParts) ? implode('; ', $summaryParts) : '0';
     }
 
     /**
@@ -103,18 +106,32 @@ class StudentRegistrationService
         return DB::transaction(function () use ($data) {
             // 1. Sanitize CNIC and Contacts
             $cleanCnic      = !empty($data['cnic']) ? preg_replace('/[^0-9]/', '', $data['cnic']) : null;
-            $cleanContact   = !empty($data['contact_no']) ? str_replace(['-', ' '], '', $data['contact_no']) : null;
-            $cleanEmergency = !empty($data['emergency_contact_no']) ? str_replace(['-', ' '], '', $data['emergency_contact_no']) : null;
+            $cleanContact   = !empty($data['contact_no']) ? preg_replace('/[^0-9]/', '', $data['contact_no']) : null;
+            $cleanEmergency = !empty($data['emergency_contact_no']) ? preg_replace('/[^0-9]/', '', $data['emergency_contact_no']) : null;
+
+            // Strict 11-digit check guard
+            if (empty($cleanContact) || strlen($cleanContact) !== 11) {
+                throw new \InvalidArgumentException('Contact number must be strictly 11 digits (e.g. 03001234567).');
+            }
+            if (empty($cleanEmergency) || strlen($cleanEmergency) !== 11) {
+                throw new \InvalidArgumentException('Emergency contact number must be strictly 11 digits (e.g. 03007654321).');
+            }
 
             // 2. Prepare Guest Info
             $guestsCount   = isset($data['guests_count']) ? (int)$data['guests_count'] : 0;
             $guest1Name    = ($guestsCount >= 1) ? ($data['guest1_name'] ?? null) : null;
             $guest1Cnic    = ($guestsCount >= 1 && !empty($data['guest1_cnic'])) ? preg_replace('/[^0-9]/', '', $data['guest1_cnic']) : null;
-            $guest1Contact = ($guestsCount >= 1 && !empty($data['guest1_contact_no'])) ? str_replace(['-', ' '], '', $data['guest1_contact_no']) : null;
+            $guest1Contact = ($guestsCount >= 1 && !empty($data['guest1_contact_no'])) ? preg_replace('/[^0-9]/', '', $data['guest1_contact_no']) : null;
+            if ($guestsCount >= 1 && (empty($guest1Contact) || strlen($guest1Contact) !== 11)) {
+                throw new \InvalidArgumentException('Guest 1 contact number must be strictly 11 digits (e.g. 03001234567).');
+            }
 
             $guest2Name    = ($guestsCount >= 2) ? ($data['guest2_name'] ?? null) : null;
             $guest2Cnic    = ($guestsCount >= 2 && !empty($data['guest2_cnic'])) ? preg_replace('/[^0-9]/', '', $data['guest2_cnic']) : null;
-            $guest2Contact = ($guestsCount >= 2 && !empty($data['guest2_contact_no'])) ? str_replace(['-', ' '], '', $data['guest2_contact_no']) : null;
+            $guest2Contact = ($guestsCount >= 2 && !empty($data['guest2_contact_no'])) ? preg_replace('/[^0-9]/', '', $data['guest2_contact_no']) : null;
+            if ($guestsCount >= 2 && (empty($guest2Contact) || strlen($guest2Contact) !== 11)) {
+                throw new \InvalidArgumentException('Guest 2 contact number must be strictly 11 digits (e.g. 03217654321).');
+            }
 
             // 3. Prepare Prof Positions JSON & Summary
             $positionsData = $data['positions_data'] ?? null;
@@ -260,18 +277,32 @@ class StudentRegistrationService
 
             // Clean CNIC & Contacts
             $cleanCnic      = !empty($data['cnic']) ? preg_replace('/[^0-9]/', '', $data['cnic']) : null;
-            $cleanContact   = !empty($data['contact_no']) ? str_replace(['-', ' '], '', $data['contact_no']) : null;
-            $cleanEmergency = !empty($data['emergency_contact_no']) ? str_replace(['-', ' '], '', $data['emergency_contact_no']) : null;
+            $cleanContact   = !empty($data['contact_no']) ? preg_replace('/[^0-9]/', '', $data['contact_no']) : null;
+            $cleanEmergency = !empty($data['emergency_contact_no']) ? preg_replace('/[^0-9]/', '', $data['emergency_contact_no']) : null;
+
+            // Strict 11-digit check guard
+            if (empty($cleanContact) || strlen($cleanContact) !== 11) {
+                throw new \InvalidArgumentException('Contact number must be strictly 11 digits (e.g. 03001234567).');
+            }
+            if (empty($cleanEmergency) || strlen($cleanEmergency) !== 11) {
+                throw new \InvalidArgumentException('Emergency contact number must be strictly 11 digits (e.g. 03007654321).');
+            }
 
             // Prepare Guest Info
             $guestsCount   = isset($data['guests_count']) ? (int)$data['guests_count'] : 0;
             $guest1Name    = ($guestsCount >= 1) ? ($data['guest1_name'] ?? null) : null;
             $guest1Cnic    = ($guestsCount >= 1 && !empty($data['guest1_cnic'])) ? preg_replace('/[^0-9]/', '', $data['guest1_cnic']) : null;
-            $guest1Contact = ($guestsCount >= 1 && !empty($data['guest1_contact_no'])) ? str_replace(['-', ' '], '', $data['guest1_contact_no']) : null;
+            $guest1Contact = ($guestsCount >= 1 && !empty($data['guest1_contact_no'])) ? preg_replace('/[^0-9]/', '', $data['guest1_contact_no']) : null;
+            if ($guestsCount >= 1 && (empty($guest1Contact) || strlen($guest1Contact) !== 11)) {
+                throw new \InvalidArgumentException('Guest 1 contact number must be strictly 11 digits (e.g. 03001234567).');
+            }
 
             $guest2Name    = ($guestsCount >= 2) ? ($data['guest2_name'] ?? null) : null;
             $guest2Cnic    = ($guestsCount >= 2 && !empty($data['guest2_cnic'])) ? preg_replace('/[^0-9]/', '', $data['guest2_cnic']) : null;
-            $guest2Contact = ($guestsCount >= 2 && !empty($data['guest2_contact_no'])) ? str_replace(['-', ' '], '', $data['guest2_contact_no']) : null;
+            $guest2Contact = ($guestsCount >= 2 && !empty($data['guest2_contact_no'])) ? preg_replace('/[^0-9]/', '', $data['guest2_contact_no']) : null;
+            if ($guestsCount >= 2 && (empty($guest2Contact) || strlen($guest2Contact) !== 11)) {
+                throw new \InvalidArgumentException('Guest 2 contact number must be strictly 11 digits (e.g. 03217654321).');
+            }
 
             // Prepare Prof Positions JSON & Summary
             $positionsData = $data['positions_data'] ?? null;
@@ -376,12 +407,20 @@ class StudentRegistrationService
 
         $convSetting = ConvocationSetting::current();
 
-        // Ensure challan number & due date exist
+        // Ensure challan number & due date exist, and sync fee dynamically if unpaid
         if (empty($reg->challan_no)) {
             $reg->challan_no = StudentRegistration::generateChallanNo($user->id);
             $reg->fee_amount = StudentRegistration::calculateFee($reg->guests_count);
             $reg->due_date   = $convSetting->registration_deadline ? $convSetting->registration_deadline->format('Y-m-d') : '2026-11-15';
             $reg->save();
+        } elseif ($reg->payment_status !== 'paid') {
+            // Dynamically sync unpaid fee with current convocation settings (Base + Guests)
+            $expectedFee = StudentRegistration::calculateFee($reg->guests_count);
+            $hasCustomWaiver = !empty($reg->admin_notes) && preg_match('/(discount|waiver|concession|custom fee)/i', $reg->admin_notes);
+            if (!$hasCustomWaiver && abs((float)$reg->fee_amount - $expectedFee) > 0.01) {
+                $reg->fee_amount = $expectedFee;
+                $reg->save();
+            }
         }
 
         $bankInfo = [
@@ -595,22 +634,81 @@ class StudentRegistrationService
     }
 
     /**
+     * SUPER ADMIN: Mark payment status as Pending Verification (Fee Pending)
+     */
+    public function markPendingPayment(int $registrationId, int $adminId, ?string $adminNotes = null): array
+    {
+        $reg = StudentRegistration::findOrFail($registrationId);
+
+        $reg->payment_status      = 'pending_verification';
+        $reg->verified_by_user_id = $adminId;
+        $reg->verified_at         = now();
+        $reg->rejection_reason    = null; // Clear previous rejection if any
+        if ($adminNotes) {
+            $reg->admin_notes     = $adminNotes;
+        }
+        $reg->save();
+
+        return [
+            'success' => true,
+            'message' => "Payment status for {$reg->name} (Challan #{$reg->challan_no}) set to PENDING VERIFICATION.",
+            'data'    => $reg
+        ];
+    }
+
+    /**
+     * SUPER ADMIN: Universal Payment Status Update (paid, unpaid, pending_verification)
+     */
+    public function updatePaymentStatus(int $registrationId, int $adminId, string $status, ?string $rejectionReason = null, ?string $adminNotes = null): array
+    {
+        if ($status === 'paid') {
+            return $this->approvePayment($registrationId, $adminId, $adminNotes);
+        } elseif ($status === 'pending_verification') {
+            return $this->markPendingPayment($registrationId, $adminId, $adminNotes);
+        } elseif ($status === 'unpaid') {
+            $reason = !empty($rejectionReason) ? $rejectionReason : 'Payment status marked as UNPAID by Super Admin.';
+            return $this->rejectPayment($registrationId, $adminId, $reason, $adminNotes);
+        }
+
+        throw new \InvalidArgumentException("Invalid payment status: {$status}");
+    }
+
+    /**
      * SUPER ADMIN: Permission / Fee Structure Override Form
      */
     public function updateFeeStructure(int $registrationId, int $adminId, array $data): array
     {
         $reg = StudentRegistration::findOrFail($registrationId);
 
-        if (isset($data['fee_amount'])) {
-            $reg->fee_amount = (float)$data['fee_amount'];
+        $settings = ConvocationSetting::current();
+        $perGuest = (float)($settings->guest_fee_per_person ?? 5000);
+
+        if (isset($data['guests_count'])) {
+            $reg->guests_count = (int)$data['guests_count'];
         }
 
         if (isset($data['due_date'])) {
             $reg->due_date = $data['due_date'];
         }
 
-        if (isset($data['guests_count'])) {
-            $reg->guests_count = (int)$data['guests_count'];
+        // Fee Amount calculation logic:
+        // 1. If explicit custom waiver flag is active, accept manual fee_amount
+        // 2. If base_fee is provided, calculate Total = base_fee + (guests * perGuest)
+        // 3. If fee_amount is provided, use fee_amount
+        // 4. Otherwise recalculate using settings
+        if (!empty($data['is_custom_waiver']) && isset($data['fee_amount'])) {
+            $reg->fee_amount = (float)$data['fee_amount'];
+            if (empty($data['admin_notes'])) {
+                $reg->admin_notes = 'Custom fee waiver applied by Admin.';
+            }
+        } elseif (isset($data['base_fee'])) {
+            $base = (float)$data['base_fee'];
+            $reg->fee_amount = $base + ((int)$reg->guests_count * $perGuest);
+        } elseif (isset($data['fee_amount'])) {
+            $reg->fee_amount = (float)$data['fee_amount'];
+        } else {
+            $base = (float)($settings->base_registration_fee ?? 15000);
+            $reg->fee_amount = $base + ((int)$reg->guests_count * $perGuest);
         }
 
         if (isset($data['payment_status']) && in_array($data['payment_status'], ['paid', 'unpaid', 'pending_verification'])) {

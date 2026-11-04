@@ -358,6 +358,17 @@
                             </span>
                         </a>
                     </li>
+                    <li class="sidebar-menu-item">
+                        <a href="{{ route('admin.settings') }}#focal_persons_card" class="sidebar-link">
+                            <span class="link-left">
+                                <i class="material-symbols-rounded">support_agent</i>
+                                <span>Focal Persons</span>
+                            </span>
+                            <span class="badge text-xxs font-monospace" style="background: rgba(255, 255, 255, 0.15); color: #fff;">
+                                {{ \App\Models\ConvocationFocalPerson::count() }}
+                            </span>
+                        </a>
+                    </li>
                 </ul>
             @else
                 <!-- Student Brand Logo & Title -->
@@ -547,6 +558,14 @@
     </div>
 
     <!-- Scripts -->
+    <!-- Bootstrap 5 Bundle JS (Popper included) -->
+    <script src="{{ asset('assets/js/core/popper.min.js') }}"></script>
+    <script src="{{ asset('assets/js/core/bootstrap.bundle.min.js') }}"></script>
+    <script>
+        if (typeof bootstrap === 'undefined') {
+            document.write('<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"><\/script>');
+        }
+    </script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js"></script>
     <script>
         if (typeof toastr !== 'undefined') {
@@ -556,6 +575,16 @@
                 "progressBar": true,
                 "timeOut": "3500"
             };
+
+            @if(session('message'))
+                var alertType = "{{ session('alert-type', 'info') }}";
+                var alertMsg = "{{ addslashes(session('message')) }}";
+                if (toastr[alertType]) {
+                    toastr[alertType](alertMsg);
+                } else {
+                    toastr.info(alertMsg);
+                }
+            @endif
         }
 
         // Mobile Sidebar Controls

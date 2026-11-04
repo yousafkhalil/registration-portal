@@ -169,10 +169,14 @@
                     @if(!empty($registration->positions_data) || !empty($registration->positions_summary))
                         <div class="pt-3 border-top mt-3">
                             <h6 class="fw-bold text-dark text-xs text-uppercase mb-2">
-                                <i class="fa fa-award text-warning me-1"></i> Academic Positions & Distinctions
+                                <i class="fa fa-award text-warning me-1"></i> Academic Positions
                             </h6>
                             <div class="alert alert-light border p-2 text-xs mb-0 text-dark">
-                                {{ $registration->positions_summary ?? 'Position data on file.' }}
+                                @if($registration->positions_summary === '0' || empty($registration->positions_summary))
+                                    <span class="text-muted"><i class="fa fa-info-circle me-1"></i> None (0)</span>
+                                @else
+                                    {{ $registration->positions_summary }}
+                                @endif
                             </div>
                         </div>
                     @endif
@@ -311,17 +315,70 @@
                     <form method="POST" action="{{ route('admin.students.updateFee', $registration->id) }}">
                         @csrf
 
-                        <!-- 1. Fee Structure Amount -->
+                        @php
+                            $currentBaseFee = (float)($convocationSettings->base_registration_fee ?? 15000);
+                            $currentGuestFee = (float)($convocationSettings->guest_fee_per_person ?? 5000);
+                            $currentGuests = (int)$registration->guests_count;
+                            $calculatedTotal = $currentBaseFee + ($currentGuests * $currentGuestFee);
+                            $isCustom = abs((float)$registration->fee_amount - $calculatedTotal) > 0.01;
+                        @endphp
+
+                        <!-- 1. Candidate Base Registration Fee -->
                         <div class="mb-3">
-                            <label class="form-label text-xs fw-bold text-white mb-1">Fee Amount Payable (PKR) <span class="text-danger">*</span></label>
+                            <label class="form-label text-xs fw-bold text-white mb-1">
+                                Candidate Base Fee (PKR) <span class="text-danger">*</span>
+                            </label>
                             <div class="input-group">
                                 <span class="input-group-text bg-white text-dark fw-bold">PKR</span>
-                                <input type="number" step="100" name="fee_amount" class="form-control bg-white text-dark fw-bold" value="{{ (int)$registration->fee_amount }}" required>
+                                <input type="number" step="100" id="admin_base_fee" name="base_fee" class="form-control bg-white text-dark fw-bold" value="{{ (int)$currentBaseFee }}" required>
                             </div>
-                            <small class="text-white-50 text-xxs">Standard: 15,000 (0 guests), 20,000 (1 guest), 25,000 (2 guests). Admin can override with waiver.</small>
+                            <small class="text-white-50 text-xxs">Official base fee (includes gown). Default: PKR {{ number_format($currentBaseFee) }}</small>
                         </div>
 
-                        <!-- 2. Payment Status Override -->
+                        <!-- 2. Accompanying Guests Override -->
+                        <div class="mb-3">
+                            <label class="form-label text-xs fw-bold text-white mb-1">
+                                Accompanying Guests Count <span class="text-danger">*</span>
+                            </label>
+                            <select id="admin_guests_count" name="guests_count" class="form-select bg-white text-dark fw-bold" required>
+                                <option value="0" {{ $currentGuests === 0 ? 'selected' : '' }}>0 Guests (PKR 0 extra)</option>
+                                <option value="1" {{ $currentGuests === 1 ? 'selected' : '' }}>1 Guest (+PKR {{ number_format($currentGuestFee) }})</option>
+                                <option value="2" {{ $currentGuests === 2 ? 'selected' : '' }}>2 Guests (+PKR {{ number_format($currentGuestFee * 2) }})</option>
+                            </select>
+                            <small class="text-white-50 text-xxs">PKR {{ number_format($currentGuestFee) }} per accompanying guest</small>
+                        </div>
+
+                        <!-- 3. Dynamic Calculation Live Formula Preview -->
+                        <div class="p-3 mb-3 rounded" style="background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25);">
+                            <div class="d-flex justify-content-between align-items-center mb-1 text-xs text-white-50">
+                                <span>Calculation:</span>
+                                <span id="admin_calc_breakdown" class="font-monospace text-white">PKR {{ number_format($currentBaseFee) }} + ({{ $currentGuests }} &times; {{ number_format($currentGuestFee) }})</span>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-between pt-2 border-top border-light">
+                                <span class="text-white fw-bold text-xs text-uppercase">Total Fee Payable:</span>
+                                <span class="text-warning fw-bold fs-5 font-monospace" id="admin_total_display">PKR {{ number_format($isCustom ? $registration->fee_amount : $calculatedTotal) }}</span>
+                            </div>
+                        </div>
+
+                        <!-- 4. Total Fee Payable Hidden/Controlled Input -->
+                        <div class="mb-3">
+                            <div class="d-flex align-items-center justify-content-between mb-1">
+                                <label class="form-label text-xs fw-bold text-white mb-0">Total Fee Amount (PKR) <span class="text-danger">*</span></label>
+                                <div class="form-check form-switch mb-0">
+                                    <input class="form-check-input" type="checkbox" id="toggle_custom_waiver" name="is_custom_waiver" value="1" {{ $isCustom ? 'checked' : '' }}>
+                                    <label class="form-check-label text-white-50 text-xxs" for="toggle_custom_waiver">Custom Override</label>
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white text-dark fw-bold">PKR</span>
+                                <input type="number" step="100" id="admin_fee_amount" name="fee_amount" class="form-control bg-white text-dark fw-bold" value="{{ (int)$registration->fee_amount }}" {{ $isCustom ? '' : 'readonly' }} required>
+                            </div>
+                            <small class="text-white-50 text-xxs" id="custom_waiver_hint">
+                                {{ $isCustom ? 'Manual fee override enabled. Type any custom concession amount.' : 'Auto-calculated: Base + (Guests × PKR 5,000). Turn on switch for custom discount.' }}
+                            </small>
+                        </div>
+
+                        <!-- 5. Payment Status Override -->
                         <div class="mb-3">
                             <label class="form-label text-xs fw-bold text-white mb-1">Fee Payment Status <span class="text-danger">*</span></label>
                             <select name="payment_status" class="form-select bg-white text-dark fw-bold" required>
@@ -331,29 +388,19 @@
                             </select>
                         </div>
 
-                        <!-- 3. Accompanying Guests Override -->
-                        <div class="mb-3">
-                            <label class="form-label text-xs fw-bold text-white mb-1">Accompanying Guests Count</label>
-                            <select name="guests_count" class="form-select bg-white text-dark">
-                                <option value="0" {{ (int)$registration->guests_count === 0 ? 'selected' : '' }}>0 Guests (Student Alone)</option>
-                                <option value="1" {{ (int)$registration->guests_count === 1 ? 'selected' : '' }}>1 Guest Allowed (+PKR 5,000)</option>
-                                <option value="2" {{ (int)$registration->guests_count === 2 ? 'selected' : '' }}>2 Guests Allowed (+PKR 10,000)</option>
-                            </select>
-                        </div>
-
-                        <!-- 4. Fee Due Date -->
+                        <!-- 6. Fee Due Date -->
                         <div class="mb-3">
                             <label class="form-label text-xs fw-bold text-white mb-1">Fee Due Date</label>
                             <input type="date" name="due_date" class="form-control bg-white text-dark" value="{{ $registration->due_date ? \Carbon\Carbon::parse($registration->due_date)->format('Y-m-d') : date('Y-m-d', strtotime('+15 days')) }}">
                         </div>
 
-                        <!-- 5. Admin Internal Notes -->
+                        <!-- 7. Admin Internal Notes -->
                         <div class="mb-3">
                             <label class="form-label text-xs fw-bold text-white mb-1">Admin Internal Remarks</label>
                             <textarea name="admin_notes" class="form-control bg-white text-dark text-xs" rows="2" placeholder="e.g. Verified via BOP branch manager scroll #492">{{ $registration->admin_notes }}</textarea>
                         </div>
 
-                        <!-- 6. Rejection Reason (if setting to unpaid) -->
+                        <!-- 8. Rejection Reason (if setting to unpaid) -->
                         <div class="mb-3">
                             <label class="form-label text-xs fw-bold text-white mb-1">Rejection Reason (Visible to Student if Unpaid)</label>
                             <input type="text" name="rejection_reason" class="form-control bg-white text-dark text-xs" placeholder="e.g. Deposit voucher image illegible" value="{{ $registration->rejection_reason }}">
@@ -380,9 +427,17 @@
                             </button>
                         </form>
 
+                        <!-- Quick Mark Fee Pending -->
+                        <form method="POST" action="{{ route('admin.students.pending', $registration->id) }}">
+                            @csrf
+                            <button type="submit" class="btn w-100 mb-0 py-2 text-white fw-bold" style="background: #0b4f6c;" onclick="return confirm('Set status of {{ addslashes($registration->name) }} to FEE PENDING (Under Review)?')">
+                                <i class="fa fa-clock me-1"></i> Mark as Fee PENDING (In Review)
+                            </button>
+                        </form>
+
                         <!-- Quick Reject -->
                         <button type="button" class="btn btn-outline-danger w-100 mb-0 py-2" data-bs-toggle="modal" data-bs-target="#quickRejectModal">
-                            <i class="fa fa-times-circle me-1"></i> Reject Payment Proof
+                            <i class="fa fa-times-circle me-1"></i> Reject Payment Proof (Set UNPAID)
                         </button>
                     </div>
 
@@ -417,6 +472,73 @@
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const baseFeeInput = document.getElementById('admin_base_fee');
+            const guestsCountSelect = document.getElementById('admin_guests_count');
+            const totalAmountInput = document.getElementById('admin_fee_amount');
+            const totalDisplay = document.getElementById('admin_total_display');
+            const breakdownDisplay = document.getElementById('admin_calc_breakdown');
+            const customSwitch = document.getElementById('toggle_custom_waiver');
+            const customHint = document.getElementById('custom_waiver_hint');
+            const perGuestFee = {{ (float)($convocationSettings->guest_fee_per_person ?? 5000) }};
+
+            function recalculate() {
+                if (!baseFeeInput || !guestsCountSelect) return;
+                const base = parseFloat(baseFeeInput.value) || 0;
+                const guests = parseInt(guestsCountSelect.value) || 0;
+                const guestTotal = guests * perGuestFee;
+                const total = base + guestTotal;
+
+                if (breakdownDisplay) {
+                    breakdownDisplay.textContent = 'PKR ' + base.toLocaleString() + ' + (' + guests + ' × ' + perGuestFee.toLocaleString() + ')';
+                }
+
+                if (customSwitch && !customSwitch.checked) {
+                    if (totalAmountInput) totalAmountInput.value = total;
+                    if (totalDisplay) totalDisplay.textContent = 'PKR ' + total.toLocaleString();
+                } else if (customSwitch && customSwitch.checked) {
+                    const manualTotal = parseFloat(totalAmountInput.value) || 0;
+                    if (totalDisplay) totalDisplay.textContent = 'PKR ' + manualTotal.toLocaleString();
+                }
+            }
+
+            if (baseFeeInput && guestsCountSelect) {
+                baseFeeInput.addEventListener('input', recalculate);
+                guestsCountSelect.addEventListener('change', recalculate);
+
+                if (customSwitch) {
+                    customSwitch.addEventListener('change', function() {
+                        if (this.checked) {
+                            totalAmountInput.removeAttribute('readonly');
+                            totalAmountInput.focus();
+                            if (customHint) {
+                                customHint.textContent = 'Manual fee override enabled. Type any custom concession amount.';
+                            }
+                        } else {
+                            totalAmountInput.setAttribute('readonly', 'readonly');
+                            if (customHint) {
+                                customHint.textContent = 'Auto-calculated: Base + (Guests × PKR ' + perGuestFee.toLocaleString() + '). Turn on switch for custom discount.';
+                            }
+                            recalculate();
+                        }
+                    });
+                }
+
+                if (totalAmountInput) {
+                    totalAmountInput.addEventListener('input', function() {
+                        if (customSwitch && customSwitch.checked) {
+                            const manualTotal = parseFloat(this.value) || 0;
+                            if (totalDisplay) totalDisplay.textContent = 'PKR ' + manualTotal.toLocaleString();
+                        }
+                    });
+                }
+
+                recalculate();
+            }
+        });
+    </script>
 
 @endsection
 

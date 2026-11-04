@@ -149,25 +149,57 @@
                                         </span>
                                     </td>
                                     <td>
+                                        <div class="dropdown">
+                                            <button class="btn btn-xs dropdown-toggle mb-0 px-2 py-1" type="button" data-bs-toggle="dropdown" aria-expanded="false"
+                                                style="
+                                                    @if($reg->payment_status === 'paid') background: #e3f3ea; color: #17693f; border: 1px solid #b8e2cb;
+                                                    @elseif($reg->payment_status === 'pending_verification') background: #e3eff5; color: #0b4f6c; border: 1px solid #b7d6e6;
+                                                    @else background: #fbf0d9; color: #8a5a0b; border: 1px solid #fae1b3; @endif
+                                                ">
+                                                @if($reg->payment_status === 'paid')
+                                                    <i class="fa fa-check-circle me-1"></i> PAID
+                                                @elseif($reg->payment_status === 'pending_verification')
+                                                    <i class="fa fa-clock me-1"></i> PENDING
+                                                @else
+                                                    <i class="fa fa-exclamation-circle me-1"></i> UNPAID
+                                                @endif
+                                            </button>
+                                            <ul class="dropdown-menu shadow border text-xs" style="font-size: 0.78rem;">
+                                                <li><h6 class="dropdown-header text-xxs text-uppercase fw-bold text-muted">Change Status Any Time</h6></li>
+                                                <li>
+                                                    <form method="POST" action="{{ route('admin.students.approve', $reg->id) }}" onsubmit="return confirm('Change status of {{ addslashes($reg->name) }} to PAID & Verified?')">
+                                                        @csrf
+                                                        <button type="submit" class="dropdown-item py-2 {{ $reg->payment_status === 'paid' ? 'active' : '' }}">
+                                                            <i class="fa fa-check-circle text-success me-2"></i> <strong>Approve (Mark PAID)</strong>
+                                                        </button>
+                                                    </form>
+                                                </li>
+                                                <li>
+                                                    <form method="POST" action="{{ route('admin.students.pending', $reg->id) }}" onsubmit="return confirm('Change status of {{ addslashes($reg->name) }} to PENDING VERIFICATION (Fee Pending)?')">
+                                                        @csrf
+                                                        <button type="submit" class="dropdown-item py-2 {{ $reg->payment_status === 'pending_verification' ? 'active' : '' }}">
+                                                            <i class="fa fa-clock text-info me-2"></i> <strong>Fee Pending (In Review)</strong>
+                                                        </button>
+                                                    </form>
+                                                </li>
+                                                <li>
+                                                    <button type="button" class="dropdown-item py-2 text-danger {{ $reg->payment_status === 'unpaid' ? 'active' : '' }}" onclick="openRejectModal({{ $reg->id }}, '{{ addslashes($reg->name) }}')">
+                                                        <i class="fa fa-times-circle text-danger me-2"></i> <strong>Reject (Mark UNPAID)</strong>
+                                                    </button>
+                                                </li>
+                                            </ul>
+                                        </div>
+
                                         @if($reg->payment_status === 'paid')
-                                            <span class="badge text-xxs" style="background: #e3f3ea; color: #17693f; border: 1px solid #b8e2cb;">
-                                                <i class="fa fa-check-circle me-1"></i> PAID
-                                            </span>
                                             <div class="text-xxs text-muted mt-1">
-                                                By: {{ $reg->verifier ? $reg->verifier->name : 'Admin' }}
+                                                Verified: {{ $reg->verifier ? $reg->verifier->name : 'Admin' }}
                                             </div>
                                         @elseif($reg->payment_status === 'pending_verification')
-                                            <span class="badge text-xxs" style="background: #e3eff5; color: #0b4f6c; border: 1px solid #b7d6e6;">
-                                                <i class="fa fa-clock me-1"></i> PENDING REVIEW
-                                            </span>
-                                            <div class="text-xxs mt-1 fw-bold" style="color: #0b4f6c;">Action Required</div>
+                                            <div class="text-xxs mt-1 fw-bold" style="color: #0b4f6c;">Under Review</div>
                                         @else
-                                            <span class="badge text-xxs" style="background: #fbf0d9; color: #8a5a0b; border: 1px solid #fae1b3;">
-                                                <i class="fa fa-exclamation-circle me-1"></i> UNPAID
-                                            </span>
                                             @if($reg->rejection_reason)
-                                                <div class="text-xxs text-danger mt-1" title="{{ $reg->rejection_reason }}">
-                                                    Rejected
+                                                <div class="text-xxs text-danger mt-1 text-truncate" style="max-width: 140px;" title="{{ $reg->rejection_reason }}">
+                                                    Reason: {{ $reg->rejection_reason }}
                                                 </div>
                                             @endif
                                         @endif
@@ -186,58 +218,32 @@
                                     </td>
                                     <td class="text-center">
                                         <div class="d-flex align-items-center justify-content-center gap-1">
-                                            @if($reg->payment_status !== 'paid')
-                                                <!-- Super Admin Quick Approve -->
-                                                <form method="POST" action="{{ route('admin.students.approve', $reg->id) }}" class="d-inline">
-                                                    @csrf
-                                                    <button type="submit" class="btn btn-sm mb-0 py-1 px-2 text-white" style="background: #17693f;" title="Approve & Mark Paid" onclick="return confirm('Confirm approve payment of PKR {{ number_format($reg->fee_amount) }} for {{ $reg->name }}?')">
-                                                        <i class="fa fa-check"></i>
-                                                    </button>
-                                                </form>
-                                            @endif
-
-                                            @if($reg->payment_status === 'pending_verification')
-                                                <!-- Reject Modal Trigger -->
-                                                <button type="button" class="btn btn-sm btn-outline-danger mb-0 py-1 px-2" data-bs-toggle="modal" data-bs-target="#rejectModal{{ $reg->id }}" title="Reject Payment Proof">
-                                                    <i class="fa fa-times"></i>
+                                            <!-- 1. Quick Approve (Any Time) -->
+                                            <form method="POST" action="{{ route('admin.students.approve', $reg->id) }}" class="d-inline" onsubmit="return confirm('Approve payment of PKR {{ number_format($reg->fee_amount) }} for {{ addslashes($reg->name) }} and mark as PAID?')">
+                                                @csrf
+                                                <button type="submit" class="btn btn-sm mb-0 py-1 px-2 text-white" style="background: #17693f;" title="Approve & Mark Paid">
+                                                    <i class="fa fa-check"></i>
                                                 </button>
-                                            @endif
+                                            </form>
 
-                                            <!-- Permission / Fee Structure Form -->
+                                            <!-- 2. Quick Mark Fee Pending (Any Time) -->
+                                            <form method="POST" action="{{ route('admin.students.pending', $reg->id) }}" class="d-inline" onsubmit="return confirm('Change status of {{ addslashes($reg->name) }} to FEE PENDING (Under Review)?')">
+                                                @csrf
+                                                <button type="submit" class="btn btn-sm mb-0 py-1 px-2 text-white" style="background: #0b4f6c;" title="Mark Fee Pending (Under Review)">
+                                                    <i class="fa fa-clock"></i>
+                                                </button>
+                                            </form>
+
+                                            <!-- 3. Quick Reject (Any Time) -->
+                                            <button type="button" class="btn btn-sm btn-outline-danger mb-0 py-1 px-2" title="Reject / Mark Unpaid" onclick="openRejectModal({{ $reg->id }}, '{{ addslashes($reg->name) }}')">
+                                                <i class="fa fa-times"></i>
+                                            </button>
+
+                                            <!-- 4. Permission / Full Fee Override Form -->
                                             <a href="{{ route('admin.students.show', $reg->id) }}" class="btn btn-sm mb-0 py-1 px-2 text-white" style="background: #0f2533;" title="Permission & Fee Override Form">
-                                                <i class="fa fa-sliders-h me-1"></i> Manage
+                                                <i class="fa fa-sliders-h"></i>
                                             </a>
                                         </div>
-
-                                        <!-- Reject Modal -->
-                                        @if($reg->payment_status === 'pending_verification')
-                                            <div class="modal fade" id="rejectModal{{ $reg->id }}" tabindex="-1" aria-hidden="true">
-                                                <div class="modal-dialog modal-dialog-centered text-start">
-                                                    <div class="modal-content">
-                                                        <form method="POST" action="{{ route('admin.students.reject', $reg->id) }}">
-                                                            @csrf
-                                                            <div class="modal-header">
-                                                                <h6 class="modal-title fw-bold">Reject Proof - {{ $reg->name }}</h6>
-                                                                <button type="button" class="btn-close text-dark" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                            </div>
-                                                            <div class="modal-body">
-                                                                <p class="text-xs text-secondary">
-                                                                    Status will revert to <strong>UNPAID</strong>. The student will see your rejection reason on their fee portal.
-                                                                </p>
-                                                                <div class="mb-3">
-                                                                    <label class="form-label text-xs fw-bold text-dark">Reason <span class="text-danger">*</span></label>
-                                                                    <textarea name="rejection_reason" class="form-control text-xs" rows="3" required placeholder="State why payment was not accepted...">Deposit voucher image is blurry / illegible</textarea>
-                                                                </div>
-                                                            </div>
-                                                            <div class="modal-footer">
-                                                                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-                                                                <button type="submit" class="btn btn-danger btn-sm">Confirm Reject</button>
-                                                            </div>
-                                                        </form>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        @endif
                                     </td>
                                 </tr>
                             @empty
@@ -263,6 +269,82 @@
             </div>
         </div>
     </div>
+
+    <!-- Global Quick Reject Modal -->
+    <div class="modal fade" id="globalRejectModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered text-start">
+            <div class="modal-content shadow border-0" style="border-radius: 12px; overflow: hidden;">
+                <form method="POST" id="globalRejectForm" action="">
+                    @csrf
+                    <div class="modal-header bg-danger text-white">
+                        <h6 class="modal-title fw-bold text-white mb-0" id="globalRejectTitle">
+                            <i class="fa fa-times-circle me-2"></i> Reject Payment & Mark UNPAID
+                        </h6>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" onclick="closeRejectModal()" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <p class="text-xs text-secondary mb-3">
+                            Status will be changed to <strong class="text-danger">UNPAID</strong>. The student will be notified and asked to review the reason and attach fresh valid proof.
+                        </p>
+                        <div class="mb-3">
+                            <label class="form-label text-xs fw-bold text-dark">Reason for Rejection <span class="text-danger">*</span></label>
+                            <select class="form-select text-xs mb-2" onchange="if(this.value !== 'Other') { document.getElementById('globalRejectReason').value = this.value; }">
+                                <option value="Deposit voucher image is blurry / illegible">Deposit voucher image is blurry / illegible</option>
+                                <option value="Bank stamp or transaction date missing">Bank stamp or transaction date missing</option>
+                                <option value="Paid amount does not match required fee">Paid amount does not match required fee</option>
+                                <option value="Invalid transaction reference / challan number">Invalid transaction reference / challan number</option>
+                                <option value="Payment not received in official institution account">Payment not received in official institution account</option>
+                                <option value="Other">Other reason (Enter below)</option>
+                            </select>
+                            <textarea name="rejection_reason" id="globalRejectReason" class="form-control text-xs" rows="3" required placeholder="State why payment was not accepted...">Deposit voucher image is blurry / illegible</textarea>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label text-xs fw-bold text-secondary">Internal Admin Remarks (Optional)</label>
+                            <input type="text" name="admin_notes" class="form-control form-control-sm text-xs" placeholder="e.g. Checked with BOP branch, scroll not found">
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-secondary btn-sm mb-0" data-bs-dismiss="modal" onclick="closeRejectModal()">Cancel</button>
+                        <button type="submit" class="btn btn-danger btn-sm mb-0 px-3">
+                            <i class="fa fa-times me-1"></i> Confirm Reject (Set UNPAID)
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openRejectModal(studentId, studentName) {
+            var form = document.getElementById('globalRejectForm');
+            form.action = '/admin/students/' + studentId + '/reject';
+            document.getElementById('globalRejectTitle').innerHTML = '<i class="fa fa-times-circle me-2"></i> Reject Payment - ' + studentName;
+
+            var modalEl = document.getElementById('globalRejectModal');
+            if (window.bootstrap && bootstrap.Modal) {
+                var modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                modal.show();
+            } else {
+                modalEl.classList.add('show');
+                modalEl.style.display = 'block';
+                document.body.classList.add('modal-open');
+            }
+        }
+
+        function closeRejectModal() {
+            var modalEl = document.getElementById('globalRejectModal');
+            if (!modalEl) return;
+            if (window.bootstrap && bootstrap.Modal) {
+                var modal = bootstrap.Modal.getInstance(modalEl);
+                if (modal) modal.hide();
+            }
+            modalEl.classList.remove('show');
+            modalEl.style.display = 'none';
+            document.body.classList.remove('modal-open');
+            var backdrops = document.querySelectorAll('.modal-backdrop');
+            backdrops.forEach(function(b) { b.remove(); });
+        }
+    </script>
 
 @endsection
 

@@ -298,19 +298,21 @@
                                 </div>
 
                                 <div class="col-md-4">
-                                    <label class="field-label">Contact Number <span class="text-danger">*</span></label>
-                                    <input type="text" name="contact_no" id="contact_no" class="form-control"
+                                    <label class="field-label">Contact Number (11 Digits) <span class="text-danger">*</span></label>
+                                    <input type="tel" name="contact_no" id="contact_no" class="form-control phone-11-mask font-monospace"
                                         value="{{ old('contact_no', $studentRegistration->contact_no ?? $user->contact_no) }}"
-                                        placeholder="e.g. 03001234567" required>
+                                        placeholder="03001234567" maxlength="11" minlength="11" pattern="[0-9]{11}" required>
+                                    <small id="contact_no_hint" class="text-xxs d-block mt-1 text-muted">Must be strictly 11 digits (e.g. 03001234567)</small>
                                 </div>
 
                                 <div class="col-md-4">
                                     <label class="field-label text-danger">
-                                        <span><i class="fa fa-phone-alt me-1"></i> Emergency Contact</span> <span class="text-danger">*</span>
+                                        <span><i class="fa fa-phone-alt me-1"></i> Emergency Contact (11 Digits)</span> <span class="text-danger">*</span>
                                     </label>
-                                    <input type="text" name="emergency_contact_no" id="emergency_contact_no" class="form-control"
+                                    <input type="tel" name="emergency_contact_no" id="emergency_contact_no" class="form-control phone-11-mask font-monospace"
                                         value="{{ old('emergency_contact_no', $studentRegistration->emergency_contact_no ?? $user->emergency_contact_no) }}"
-                                        placeholder="e.g. 03007654321" required>
+                                        placeholder="03007654321" maxlength="11" minlength="11" pattern="[0-9]{11}" required>
+                                    <small id="emergency_contact_no_hint" class="text-xxs d-block mt-1 text-muted">Must be strictly 11 digits (e.g. 03007654321)</small>
                                 </div>
 
                                 <div class="col-md-4">
@@ -483,10 +485,11 @@
                                                 placeholder="e.g. 35202-1234567-1">
                                         </div>
                                         <div class="col-md-4">
-                                            <label class="field-label">Contact No <span class="text-danger">*</span></label>
-                                            <input type="text" name="guest1_contact_no" id="guest1_contact_no" class="form-control"
+                                            <label class="field-label">Contact No (11 Digits) <span class="text-danger">*</span></label>
+                                            <input type="tel" name="guest1_contact_no" id="guest1_contact_no" class="form-control phone-11-mask font-monospace"
                                                 value="{{ old('guest1_contact_no', $studentRegistration->guest1_contact_no) }}"
-                                                placeholder="e.g. 03001234567">
+                                                placeholder="03001234567" maxlength="11" minlength="11" pattern="[0-9]{11}">
+                                            <small id="guest1_contact_no_hint" class="text-xxs d-block mt-1 text-muted">Strictly 11 digits (e.g. 03001234567)</small>
                                         </div>
                                     </div>
                                 </div>
@@ -513,10 +516,11 @@
                                                 placeholder="e.g. 35202-7654321-2">
                                         </div>
                                         <div class="col-md-4">
-                                            <label class="field-label">Contact No <span class="text-danger">*</span></label>
-                                            <input type="text" name="guest2_contact_no" id="guest2_contact_no" class="form-control"
+                                            <label class="field-label">Contact No (11 Digits) <span class="text-danger">*</span></label>
+                                            <input type="tel" name="guest2_contact_no" id="guest2_contact_no" class="form-control phone-11-mask font-monospace"
                                                 value="{{ old('guest2_contact_no', $studentRegistration->guest2_contact_no) }}"
-                                                placeholder="e.g. 03217654321">
+                                                placeholder="03217654321" maxlength="11" minlength="11" pattern="[0-9]{11}">
+                                            <small id="guest2_contact_no_hint" class="text-xxs d-block mt-1 text-muted">Strictly 11 digits (e.g. 03217654321)</small>
                                         </div>
                                     </div>
                                 </div>
@@ -549,9 +553,9 @@
                     <div class="edit-section-card">
                         <div class="edit-card-header">
                             <h6>
-                                <i class="fa fa-trophy text-warning"></i> 5. Professional Examination Distinctions & Positions
+                                <i class="fa fa-trophy text-warning"></i> 5. Professional Examination Academic Positions
                             </h6>
-                            <span class="badge bg-warning text-dark">Distinctions</span>
+                            <span class="badge" style="background: #e3eff5; color: #0b4f6c; border: 1px solid #b7d6e6;">Positions</span>
                         </div>
                         <div class="card-body p-3">
                             <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
@@ -560,7 +564,7 @@
                                         Degree: {{ $selectedDept }}
                                     </span>
                                     <span class="text-xs text-secondary ms-1">
-                                        Click your position in each Prof. (Leave as <em>None</em> if no position):
+                                        Click your position in each Prof. (Leave as <em>None (0)</em> if no position):
                                     </span>
                                 </div>
                             </div>
@@ -584,7 +588,7 @@
                                                         <h6 class="text-sm fw-bold text-dark mb-0">
                                                             <i class="fa fa-award text-primary me-1"></i> {{ $prof }}
                                                         </h6>
-                                                        <small class="text-muted text-xxs">Select position if achieved, or leave as None</small>
+                                                        <small class="text-muted text-xxs">Select position if achieved, or leave as None (0)</small>
                                                     </div>
                                                     <span class="badge bg-light text-secondary text-xxs">{{ $deptKey }}</span>
                                                 </div>
@@ -602,26 +606,10 @@
                                                         data-pos="3rd Position" onclick="selectProfPosition(this, '{{ $prof }}', '3rd Position')">
                                                         3rd Position
                                                     </button>
-                                                    <button type="button" class="btn btn-sm position-opt-btn"
-                                                        data-pos="Subject Distinction" onclick="selectProfPosition(this, '{{ $prof }}', 'Subject Distinction')">
-                                                        Subject Distinction
+                                                    <button type="button" class="btn btn-sm position-opt-btn active"
+                                                        data-pos="0" onclick="selectProfPosition(this, '{{ $prof }}', '0')">
+                                                        None (0)
                                                     </button>
-                                                    <button type="button" class="btn btn-sm position-clear-btn"
-                                                        onclick="clearProfPosition(this, '{{ $prof }}')">
-                                                        None
-                                                    </button>
-                                                </div>
-
-                                                <div class="subject-input-wrap mt-3" id="subj_box_{{ $safeProfId }}" style="display: none;">
-                                                    <div class="p-2 rounded bg-light border">
-                                                        <label class="form-label text-xxs fw-bold text-dark mb-1">
-                                                            <i class="fa fa-pencil text-primary me-1"></i> Enter Subject Name with Distinction:
-                                                        </label>
-                                                        <input type="text" class="form-control form-control-sm prof-subject-input"
-                                                            placeholder="e.g. Anatomy, Physiology, Pharmacology, Medicine"
-                                                            data-prof="{{ $prof }}"
-                                                            oninput="handleSubjectInput('{{ $prof }}', this.value)">
-                                                    </div>
                                                 </div>
                                             </div>
                                         @endforeach
@@ -769,14 +757,9 @@
                 if (Array.isArray(parsed)) {
                     parsed.forEach(function (item) {
                         if (item.prof) {
-                            var posVal = item.position || (item.overall_first ? '1st Position' : '');
-                            var subjVal = item.subject || '';
-                            if (!subjVal && Array.isArray(item.subjects) && item.subjects.length > 0) {
-                                subjVal = item.subjects.join(', ');
-                            }
+                            var posVal = item.position || (item.overall_first ? '1st Position' : '0');
                             selectedProfPositions[item.prof] = {
-                                position: posVal,
-                                subject: subjVal
+                                position: posVal
                             };
                         }
                     });
@@ -799,21 +782,8 @@
             // Activate clicked button
             btn.classList.add('active');
 
-            // Handle subject distinction box
-            var subjBox = card.querySelector('.subject-input-wrap');
-            var subjInput = card.querySelector('.prof-subject-input');
-            var currentSubjVal = subjInput ? subjInput.value.trim() : '';
-
-            if (pos === 'Subject Distinction') {
-                if (subjBox) subjBox.style.display = 'block';
-                if (subjInput) subjInput.focus();
-            } else {
-                if (subjBox) subjBox.style.display = 'none';
-            }
-
             selectedProfPositions[prof] = {
-                position: pos,
-                subject: currentSubjVal
+                position: pos || '0'
             };
 
             syncPositionsJsonAndSummary();
@@ -828,24 +798,12 @@
                 b.classList.remove('active');
             });
 
-            var subjBox = card.querySelector('.subject-input-wrap');
-            if (subjBox) subjBox.style.display = 'none';
-            var subjInput = card.querySelector('.prof-subject-input');
-            if (subjInput) subjInput.value = '';
+            var noneBtn = card.querySelector('.position-opt-btn[data-pos="0"]');
+            if (noneBtn) noneBtn.classList.add('active');
 
-            delete selectedProfPositions[prof];
-            syncPositionsJsonAndSummary();
-        }
-
-        function handleSubjectInput(prof, val) {
-            if (selectedProfPositions[prof]) {
-                selectedProfPositions[prof].subject = val;
-            } else {
-                selectedProfPositions[prof] = {
-                    position: 'Subject Distinction',
-                    subject: val
-                };
-            }
+            selectedProfPositions[prof] = {
+                position: '0'
+            };
             syncPositionsJsonAndSummary();
         }
 
@@ -864,32 +822,27 @@
                 });
             }
 
-            for (var prof in selectedProfPositions) {
-                if (allowedProfs.length > 0 && allowedProfs.indexOf(prof) === -1) continue;
-
+            allowedProfs.forEach(function (prof) {
                 var item = selectedProfPositions[prof];
-                if (item && item.position) {
-                    result.push({
-                        prof: prof,
-                        position: item.position,
-                        subject: item.subject || ''
-                    });
+                var pos = (item && item.position) ? item.position : '0';
 
-                    var label = prof + ': ' + item.position;
-                    if (item.position === 'Subject Distinction' && item.subject) {
-                        label += ' (' + item.subject + ')';
-                    }
-                    summaryParts.push(label);
+                result.push({
+                    prof: prof,
+                    position: pos
+                });
+
+                if (pos && pos !== '0' && pos.toLowerCase() !== 'none') {
+                    summaryParts.push(prof + ': ' + pos);
                 }
-            }
+            });
 
             var hiddenData = document.getElementById('positions_data');
             var hiddenSummary = document.getElementById('positions_summary');
             var summaryText = document.getElementById('summary_text');
 
             if (hiddenData) hiddenData.value = JSON.stringify(result);
-            var summaryStr = summaryParts.length > 0 ? summaryParts.join(' | ') : 'No position selected (Optional)';
-            if (hiddenSummary) hiddenSummary.value = summaryParts.join('; ');
+            var summaryStr = summaryParts.length > 0 ? summaryParts.join(' | ') : '0 (No Positions)';
+            if (hiddenSummary) hiddenSummary.value = summaryParts.length > 0 ? summaryParts.join('; ') : '0';
             if (summaryText) summaryText.innerText = summaryStr;
         }
 
@@ -1016,30 +969,66 @@
             }
         });
 
+        // Live indicator for 11-digit phone inputs
+        function updatePhoneInputIndicator(input) {
+            if (!input) return;
+            var hint = document.getElementById(input.id + '_hint');
+            var raw = input.value.replace(/[^0-9]/g, '');
+            if (raw.length > 11) raw = raw.slice(0, 11);
+            input.value = raw;
+
+            if (!hint) return;
+
+            if (raw.length === 0) {
+                hint.innerHTML = '<span class="text-danger"><i class="fa fa-exclamation-circle me-1"></i> Strictly 11 digits required</span>';
+                input.style.borderColor = '#dc3545';
+            } else if (raw.length < 11) {
+                hint.innerHTML = '<span class="text-danger fw-bold"><i class="fa fa-exclamation-triangle me-1"></i> ' + raw.length + ' / 11 digits (' + (11 - raw.length) + ' more needed)</span>';
+                input.style.borderColor = '#dc3545';
+            } else if (raw.length === 11) {
+                hint.innerHTML = '<span class="text-success fw-bold"><i class="fa fa-check-circle me-1"></i> Valid 11 digits entered</span>';
+                input.style.borderColor = '#198754';
+            }
+        }
+
         // Initialize state on page load
         document.addEventListener('DOMContentLoaded', function () {
+            // Attach 11-digit numeric mask and live indicator to phone inputs
+            document.querySelectorAll('.phone-11-mask').forEach(function (input) {
+                input.addEventListener('input', function () {
+                    updatePhoneInputIndicator(this);
+                });
+                input.addEventListener('blur', function () {
+                    updatePhoneInputIndicator(this);
+                });
+                if (input.value) {
+                    updatePhoneInputIndicator(input);
+                }
+            });
+
             var currentGuestsCount = document.getElementById('guests_count') ? document.getElementById('guests_count').value : '0';
             handleGuestCountChange(currentGuestsCount);
 
             var currentDept = document.getElementById('department') ? document.getElementById('department').value : 'MBBS';
             handleDepartmentChange(currentDept);
 
-            // Restore any active saved positions
-            for (var prof in selectedProfPositions) {
-                var item = selectedProfPositions[prof];
-                var card = document.querySelector('.prof-row-card[data-prof="' + prof + '"]');
-                if (card && item && item.position) {
-                    var btn = card.querySelector('.position-opt-btn[data-pos="' + item.position + '"]');
-                    if (btn) btn.classList.add('active');
+            // Restore any active saved positions, or default to None (0)
+            document.querySelectorAll('.prof-row-card').forEach(function (card) {
+                var prof = card.getAttribute('data-prof');
+                var allBtns = card.querySelectorAll('.position-opt-btn');
+                allBtns.forEach(function (b) { b.classList.remove('active'); });
 
-                    if (item.position === 'Subject Distinction') {
-                        var subjBox = card.querySelector('.subject-input-wrap');
-                        var subjInput = card.querySelector('.prof-subject-input');
-                        if (subjBox) subjBox.style.display = 'block';
-                        if (subjInput && item.subject) subjInput.value = item.subject;
-                    }
+                var saved = selectedProfPositions[prof];
+                var targetPos = (saved && saved.position) ? saved.position : '0';
+                var btn = card.querySelector('.position-opt-btn[data-pos="' + targetPos + '"]');
+                if (btn) {
+                    btn.classList.add('active');
+                } else {
+                    var noneBtn = card.querySelector('.position-opt-btn[data-pos="0"]');
+                    if (noneBtn) noneBtn.classList.add('active');
                 }
-            }
+            });
+
             syncPositionsJsonAndSummary();
         });
 
@@ -1080,6 +1069,56 @@
                     !area || !city || !province || !uhsReg || !pmdcReg) {
                     showNotification('warning', 'Please fill in all mandatory fields marked with an asterisk (*).');
                     return;
+                }
+
+                // Strict 11-digit phone check
+                var cleanContact = contact.replace(/[^0-9]/g, '');
+                var cleanEmergency = emergency.replace(/[^0-9]/g, '');
+
+                if (cleanContact.length !== 11) {
+                    var cInput = document.getElementById('contact_no');
+                    if (cInput) {
+                        cInput.focus();
+                        updatePhoneInputIndicator(cInput);
+                    }
+                    showNotification('error', 'Contact / Mobile Number must be strictly 11 digits! Submission blocked.');
+                    return;
+                }
+
+                if (cleanEmergency.length !== 11) {
+                    var emInput = document.getElementById('emergency_contact_no');
+                    if (emInput) {
+                        emInput.focus();
+                        updatePhoneInputIndicator(emInput);
+                    }
+                    showNotification('error', 'Emergency Contact Number must be strictly 11 digits! Submission blocked.');
+                    return;
+                }
+
+                var guestsCountVal = parseInt(document.getElementById('guests_count') ? document.getElementById('guests_count').value : '0', 10);
+                if (guestsCountVal >= 1) {
+                    var g1ContactEl = document.getElementById('guest1_contact_no');
+                    var g1Val = g1ContactEl ? g1ContactEl.value.replace(/[^0-9]/g, '') : '';
+                    if (g1Val.length !== 11) {
+                        if (g1ContactEl) {
+                            g1ContactEl.focus();
+                            updatePhoneInputIndicator(g1ContactEl);
+                        }
+                        showNotification('error', 'Guest 1 Contact Number must be strictly 11 digits! Submission blocked.');
+                        return;
+                    }
+                }
+                if (guestsCountVal >= 2) {
+                    var g2ContactEl = document.getElementById('guest2_contact_no');
+                    var g2Val = g2ContactEl ? g2ContactEl.value.replace(/[^0-9]/g, '') : '';
+                    if (g2Val.length !== 11) {
+                        if (g2ContactEl) {
+                            g2ContactEl.focus();
+                            updatePhoneInputIndicator(g2ContactEl);
+                        }
+                        showNotification('error', 'Guest 2 Contact Number must be strictly 11 digits! Submission blocked.');
+                        return;
+                    }
                 }
 
                 if (btn) {

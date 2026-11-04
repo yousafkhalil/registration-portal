@@ -296,48 +296,148 @@
             </div>
         </form>
 
-        <!-- Card 6: Focal Persons Management -->
-        <div class="settings-card">
-            <div class="settings-header">
-                <h5>
-                    <i class="fa fa-headset" style="color: #0b4f6c;"></i> 6. Convocation Focal Persons
-                </h5>
-                <button type="button" class="btn btn-sm btn-outline-secondary mb-0" data-bs-toggle="modal" data-bs-target="#addFocalModal">
-                    <i class="fa fa-plus me-1"></i> Add New Focal Person
+        <!-- Card 6: Focal Persons Management (Dynamic Database Records) -->
+        <div class="settings-card" id="focal_persons_card">
+            <div class="settings-header flex-wrap gap-2">
+                <div>
+                    <h5>
+                        <i class="fa fa-headset" style="color: #0b4f6c;"></i> 6. Convocation Focal Persons (Add / Edit / Remove)
+                    </h5>
+                    <small class="text-muted text-xxs">These focal persons are shown to students on the public registration page, student portal sidebar, and fee payment helpline.</small>
+                </div>
+                <button type="button" class="btn btn-sm text-white mb-0" style="background: #0b4f6c;" onclick="openAddFocalForm()">
+                    <i class="fa fa-plus-circle me-1"></i> Add New Focal Person
                 </button>
+            </div>
+
+            <!-- Inline Quick Add / Edit Form Box -->
+            <div id="focal_inline_box" class="p-3 mb-4 rounded border bg-light shadow-sm" style="display: none; border-color: #b7d6e6 !important;">
+                <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
+                    <h6 class="fw-bold text-dark mb-0" id="inlineFocalTitle">
+                        <i class="fa fa-user-plus text-primary me-2"></i> Add Convocation Focal Person
+                    </h6>
+                    <button type="button" class="btn btn-xs btn-outline-secondary mb-0" onclick="hideInlineFocalForm()">
+                        <i class="fa fa-times me-1"></i> Close
+                    </button>
+                </div>
+
+                <form method="POST" action="{{ route('admin.focalPersons.save') }}" id="inlineFocalForm">
+                    @csrf
+                    <input type="hidden" name="id" id="inline_focal_id" value="">
+
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label text-xs fw-bold">Full Name <span class="text-danger">*</span></label>
+                            <input type="text" name="name" id="inline_focal_name" class="form-control" placeholder="e.g. Dr. Talha Khalil" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-xs fw-bold">Designation / Role</label>
+                            <input type="text" name="designation" id="inline_focal_designation" class="form-control" placeholder="e.g. Convocation Focal Person">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-xs fw-bold">Mobile Number <span class="text-danger">*</span></label>
+                            <input type="text" name="mobile" id="inline_focal_mobile" class="form-control font-monospace" placeholder="e.g. +92 300 3180057" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-xs fw-bold">Official Email (Optional)</label>
+                            <input type="email" name="email" id="inline_focal_email" class="form-control" placeholder="e.g. talha@simc.edu.pk">
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <label class="form-label text-xs fw-bold">Display Sort Order</label>
+                            <input type="number" name="sort_order" id="inline_focal_sort_order" class="form-control font-monospace" value="1" min="1">
+                        </div>
+                        <div class="col-md-3 col-sm-6 d-flex align-items-center pt-3">
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" name="is_active" id="inline_focal_is_active" value="1" checked>
+                                <label class="form-check-label text-xs fw-bold ms-2" for="inline_focal_is_active">Active & Visible</label>
+                            </div>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end justify-content-end gap-2">
+                            <button type="button" class="btn btn-secondary btn-sm mb-0" onclick="hideInlineFocalForm()">Cancel</button>
+                            <button type="submit" id="inlineFocalSubmitBtn" class="btn btn-sm text-white mb-0 text-nowrap px-3" style="background: #0b4f6c;">
+                                <i class="fa fa-save me-1"></i> Save
+                            </button>
+                        </div>
+                    </div>
+                </form>
             </div>
 
             <div class="table-responsive">
                 <table class="table align-items-center mb-0">
                     <thead>
                         <tr class="bg-light">
-                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-3">Name</th>
-                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Designation</th>
-                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Mobile Number</th>
-                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Order</th>
+                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-3">Name & Role</th>
+                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Mobile Contact</th>
+                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Email</th>
+                            <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Sort Order</th>
+                            <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
                             <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($focalPersons as $fp)
                             <tr>
-                                <td class="ps-3 fw-bold text-dark text-sm">{{ $fp->name }}</td>
-                                <td class="text-xs text-secondary">{{ $fp->designation }}</td>
-                                <td class="font-monospace fw-bold text-primary text-xs">{{ $fp->mobile }}</td>
-                                <td class="text-xs">{{ $fp->sort_order }}</td>
+                                <td class="ps-3">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="avatar avatar-xs rounded-circle d-flex align-items-center justify-content-center text-white" style="background: #0b4f6c; font-size: 0.70rem; width: 28px; height: 28px;">
+                                            <i class="fa fa-user-tie"></i>
+                                        </div>
+                                        <div>
+                                            <strong class="d-block text-dark text-sm">{{ $fp->name }}</strong>
+                                            <small class="text-muted text-xxs">{{ $fp->designation ?? 'Convocation Focal Person' }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <a href="tel:{{ $fp->mobile }}" class="font-monospace fw-bold text-primary text-xs text-decoration-none">
+                                        <i class="fa fa-phone-alt text-success me-1"></i> {{ $fp->mobile }}
+                                    </a>
+                                </td>
+                                <td class="text-xs text-muted">
+                                    @if(!empty($fp->email))
+                                        <a href="mailto:{{ $fp->email }}" class="text-muted text-decoration-none">
+                                            <i class="fa fa-envelope me-1"></i> {{ $fp->email }}
+                                        </a>
+                                    @else
+                                        <span class="text-muted text-xxs">—</span>
+                                    @endif
+                                </td>
                                 <td class="text-center">
-                                    <form method="POST" action="{{ route('admin.focalPersons.delete', $fp->id) }}" class="d-inline" onsubmit="return confirm('Delete focal person {{ $fp->name }}?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-outline-danger mb-0 py-1 px-2">
-                                            <i class="fa fa-trash"></i>
+                                    <span class="badge bg-light text-secondary text-xxs font-monospace">{{ $fp->sort_order }}</span>
+                                </td>
+                                <td class="text-center">
+                                    @if($fp->is_active)
+                                        <span class="badge" style="background: #e3f3ea; color: #17693f; border: 1px solid #b8e2cb; font-size: 0.70rem;">
+                                            <i class="fa fa-check-circle me-1"></i> Active
+                                        </span>
+                                    @else
+                                        <span class="badge" style="background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; font-size: 0.70rem;">
+                                            Inactive
+                                        </span>
+                                    @endif
+                                </td>
+                                <td class="text-center">
+                                    <div class="d-inline-flex gap-1 align-items-center">
+                                        <button type="button" class="btn btn-sm btn-outline-primary mb-0 py-1 px-2"
+                                            title="Edit Focal Person"
+                                            onclick="openEditFocalForm('{{ $fp->id }}', '{{ addslashes($fp->name) }}', '{{ addslashes($fp->designation) }}', '{{ addslashes($fp->mobile) }}', '{{ addslashes($fp->email ?? '') }}', '{{ $fp->sort_order }}', '{{ $fp->is_active ? 1 : 0 }}')">
+                                            <i class="fa fa-pencil-alt me-1"></i> Edit
                                         </button>
-                                    </form>
+                                        <form method="POST" action="{{ route('admin.focalPersons.delete', $fp->id) }}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete focal person: {{ addslashes($fp->name) }}?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-outline-danger mb-0 py-1 px-2" title="Delete Focal Person">
+                                                <i class="fa fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="text-center py-4 text-muted">No focal persons registered in database yet.</td>
+                                <td colspan="6" class="text-center py-4 text-muted">
+                                    <i class="fa fa-info-circle me-1"></i> No focal persons registered in database yet. Click <strong>Add New Focal Person</strong> above to add.
+                                </td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -346,42 +446,130 @@
         </div>
     </div>
 
-    <!-- Add Focal Person Modal -->
-    <div class="modal fade" id="addFocalModal" tabindex="-1" aria-hidden="true">
+    <!-- Unified Add / Edit Focal Person Modal (Secondary / Overlay Option) -->
+    <div class="modal fade" id="focalPersonModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <form method="POST" action="{{ route('admin.focalPersons.save') }}">
+            <div class="modal-content shadow border-0" style="border-radius: 12px; overflow: hidden;">
+                <form method="POST" action="{{ route('admin.focalPersons.save') }}" id="focalPersonModalForm">
                     @csrf
-                    <div class="modal-header">
-                        <h6 class="modal-title fw-bold">Add Convocation Focal Person</h6>
-                        <button type="button" class="btn-close text-dark" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <input type="hidden" name="id" id="modal_focal_id" value="">
+
+                    <div class="modal-header text-white" style="background: #0b4f6c;">
+                        <h6 class="modal-title fw-bold text-white mb-0" id="focalModalTitle">
+                            <i class="fa fa-user-plus me-2"></i> Add Convocation Focal Person
+                        </h6>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" onclick="closeFocalModal()" aria-label="Close"></button>
                     </div>
-                    <div class="modal-body">
+
+                    <div class="modal-body p-4">
                         <div class="mb-3">
                             <label class="form-label text-xs fw-bold">Full Name <span class="text-danger">*</span></label>
-                            <input type="text" name="name" class="form-control form-control-sm" placeholder="e.g. Dr. Talha Khalil" required>
+                            <input type="text" name="name" id="modal_focal_name" class="form-control" placeholder="e.g. Dr. Talha Khalil" required>
                         </div>
+
                         <div class="mb-3">
-                            <label class="form-label text-xs fw-bold">Designation / Role</label>
-                            <input type="text" name="designation" class="form-control form-control-sm" value="Convocation Focal Person">
+                            <label class="form-label text-xs fw-bold">Designation / Department</label>
+                            <input type="text" name="designation" id="modal_focal_designation" class="form-control" placeholder="e.g. Convocation Focal Person / Assistant Professor">
                         </div>
+
                         <div class="mb-3">
-                            <label class="form-label text-xs fw-bold">Mobile Number <span class="text-danger">*</span></label>
-                            <input type="text" name="mobile" class="form-control form-control-sm font-monospace" placeholder="e.g. +92 300 3180057" required>
+                            <label class="form-label text-xs fw-bold">Mobile / WhatsApp Number <span class="text-danger">*</span></label>
+                            <input type="text" name="mobile" id="modal_focal_mobile" class="form-control font-monospace" placeholder="e.g. +92 300 3180057" required>
+                            <small class="text-muted text-xxs">Will be click-to-dial on student screens</small>
                         </div>
-                        <div class="mb-2">
-                            <label class="form-label text-xs fw-bold">Display Sort Order</label>
-                            <input type="number" name="sort_order" class="form-control form-control-sm" value="1">
+
+                        <div class="mb-3">
+                            <label class="form-label text-xs fw-bold">Email Address (Optional)</label>
+                            <input type="email" name="email" id="modal_focal_email" class="form-control" placeholder="e.g. talha@simc.edu.pk">
+                        </div>
+
+                        <div class="row g-2">
+                            <div class="col-sm-6">
+                                <label class="form-label text-xs fw-bold">Display Sort Order</label>
+                                <input type="number" name="sort_order" id="modal_focal_sort_order" class="form-control font-monospace" value="1" min="1">
+                            </div>
+                            <div class="col-sm-6 d-flex align-items-center pt-3">
+                                <div class="form-check form-switch mb-0">
+                                    <input class="form-check-input" type="checkbox" name="is_active" id="modal_focal_is_active" value="1" checked>
+                                    <label class="form-check-label text-xs fw-bold ms-2" for="modal_focal_is_active">Active & Visible</label>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-sm text-white" style="background: #0b4f6c;">Save Focal Person to Database</button>
+
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-secondary btn-sm mb-0" data-bs-dismiss="modal" onclick="closeFocalModal()">Cancel</button>
+                        <button type="submit" id="focalModalSubmitBtn" class="btn btn-sm text-white mb-0 px-3" style="background: #0b4f6c;">
+                            <i class="fa fa-save me-1"></i> Save Focal Person
+                        </button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
+
+    <script>
+        // 1. INLINE FORM HANDLERS (Recommended, fast & works on every device)
+        function openAddFocalForm() {
+            var box = document.getElementById('focal_inline_box');
+            if (box) {
+                box.style.display = 'block';
+                document.getElementById('inlineFocalTitle').innerHTML = '<i class="fa fa-user-plus text-primary me-2"></i> Add New Convocation Focal Person';
+                document.getElementById('inlineFocalSubmitBtn').innerHTML = '<i class="fa fa-save me-1"></i> Save Focal Person';
+                document.getElementById('inline_focal_id').value = '';
+                document.getElementById('inline_focal_name').value = '';
+                document.getElementById('inline_focal_designation').value = 'Convocation Focal Person';
+                document.getElementById('inline_focal_mobile').value = '';
+                document.getElementById('inline_focal_email').value = '';
+                document.getElementById('inline_focal_sort_order').value = '1';
+                document.getElementById('inline_focal_is_active').checked = true;
+
+                box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                var nameInput = document.getElementById('inline_focal_name');
+                if (nameInput) nameInput.focus();
+            }
+        }
+
+        function openEditFocalForm(id, name, designation, mobile, email, sortOrder, isActive) {
+            var box = document.getElementById('focal_inline_box');
+            if (box) {
+                box.style.display = 'block';
+                document.getElementById('inlineFocalTitle').innerHTML = '<i class="fa fa-user-edit text-primary me-2"></i> Edit Focal Person: ' + name;
+                document.getElementById('inlineFocalSubmitBtn').innerHTML = '<i class="fa fa-check me-1"></i> Update Focal Person';
+                document.getElementById('inline_focal_id').value = id;
+                document.getElementById('inline_focal_name').value = name;
+                document.getElementById('inline_focal_designation').value = designation || 'Convocation Focal Person';
+                document.getElementById('inline_focal_mobile').value = mobile;
+                document.getElementById('inline_focal_email').value = email || '';
+                document.getElementById('inline_focal_sort_order').value = sortOrder || 1;
+                document.getElementById('inline_focal_is_active').checked = (isActive == 1 || isActive === '1' || isActive === true);
+
+                box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                var nameInput = document.getElementById('inline_focal_name');
+                if (nameInput) nameInput.focus();
+            }
+        }
+
+        function hideInlineFocalForm() {
+            var box = document.getElementById('focal_inline_box');
+            if (box) box.style.display = 'none';
+        }
+
+        // 2. MODAL FALLBACK HANDLERS
+        function closeFocalModal() {
+            var modalEl = document.getElementById('focalPersonModal');
+            if (!modalEl) return;
+            if (window.bootstrap && bootstrap.Modal) {
+                var modal = bootstrap.Modal.getInstance(modalEl);
+                if (modal) modal.hide();
+            }
+            modalEl.classList.remove('show');
+            modalEl.style.display = 'none';
+            document.body.classList.remove('modal-open');
+            var backdrops = document.querySelectorAll('.modal-backdrop');
+            backdrops.forEach(function(b) { b.remove(); });
+        }
+    </script>
 
 @endsection
 

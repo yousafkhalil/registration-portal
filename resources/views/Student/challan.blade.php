@@ -191,6 +191,15 @@
         }
     </style>
 
+    @php
+        $breakdown = $registration->fee_breakdown;
+        $baseFee = (float)$breakdown['base_registration_fee'];
+        $guestFee = (float)$breakdown['guest_fee_per_person'];
+        $guestsCount = (int)$registration->guests_count;
+        $guestsTotal = (float)$breakdown['guests_total_fee'];
+        $totalPayable = (float)$breakdown['total_fee'];
+    @endphp
+
     <div class="challan-container">
         <!-- Action Bar (Hidden when printing) -->
         <div class="challan-actions-card d-flex flex-column flex-md-row align-items-stretch align-items-md-center justify-content-between gap-3">
@@ -208,9 +217,9 @@
                 </h5>
                 <div class="text-xs text-muted">
                     Challan No: <strong class="text-dark font-monospace">{{ $registration->challan_no }}</strong> | 
-                    Total Payable: <strong class="text-dark fs-6">PKR {{ number_format($registration->fee_amount) }}</strong>
+                    Total Payable: <strong class="text-dark fs-6">PKR {{ number_format($totalPayable) }}</strong>
                     <span class="ms-1">
-                        ({{ (int)$registration->guests_count === 0 ? 'Candidate Alone: ' . number_format($convocationSettings->base_registration_fee ?? 15000) : ((int)$registration->guests_count === 1 ? 'Candidate + 1 Guest: ' . number_format(($convocationSettings->base_registration_fee ?? 15000) + ($convocationSettings->guest_fee_per_person ?? 5000)) : 'Candidate + 2 Guests: ' . number_format(($convocationSettings->base_registration_fee ?? 15000) + (2 * ($convocationSettings->guest_fee_per_person ?? 5000)))) }})
+                        ({{ $guestsCount === 0 ? 'Candidate Alone: PKR ' . number_format($baseFee) : ($guestsCount === 1 ? 'Candidate + 1 Guest: PKR ' . number_format($totalPayable) : 'Candidate + 2 Guests: PKR ' . number_format($totalPayable)) }})
                     </span>
                 </div>
             </div>
@@ -308,15 +317,15 @@
                     <div class="border rounded p-2 mb-3 bg-light text-xs">
                         <div class="d-flex justify-content-between py-1 border-bottom">
                             <span>Graduate Registration (Gown Included)</span>
-                            <span class="font-monospace fw-bold">PKR {{ number_format($convocationSettings->base_registration_fee ?? 15000) }}</span>
+                            <span class="font-monospace fw-bold">PKR {{ number_format($baseFee) }}</span>
                         </div>
                         <div class="d-flex justify-content-between py-1 border-bottom">
-                            <span>Guest Fee ({{ (int)$registration->guests_count }} &times; {{ number_format($convocationSettings->guest_fee_per_person ?? 5000) }})</span>
-                            <span class="font-monospace fw-bold">PKR {{ number_format((int)$registration->guests_count * ($convocationSettings->guest_fee_per_person ?? 5000)) }}</span>
+                            <span>Guest Fee ({{ $guestsCount }} &times; PKR {{ number_format($guestFee) }})</span>
+                            <span class="font-monospace fw-bold">PKR {{ number_format($guestsTotal) }}</span>
                         </div>
                         <div class="d-flex justify-content-between py-2 fw-bold text-dark" style="font-size: 0.90rem;">
                             <span>Total Payable Amount</span>
-                            <span class="font-monospace" style="color: #0b4f6c;">PKR {{ number_format($registration->fee_amount) }}</span>
+                            <span class="font-monospace" style="color: #0b4f6c;">PKR {{ number_format($totalPayable) }}</span>
                         </div>
                     </div>
 
@@ -488,21 +497,21 @@
                                                 Graduate Registration Fee
                                                 <small class="d-block text-muted" style="font-size: 0.64rem;">({{ $convocationSettings->gown_fee_notice ?? 'Including Convocation Gown' }})</small>
                                             </td>
-                                            <td class="text-end font-monospace">{{ number_format($convocationSettings->base_registration_fee ?? 15000) }}</td>
+                                            <td class="text-end font-monospace">{{ number_format($baseFee) }}</td>
                                         </tr>
                                         <tr>
                                             <td>
-                                                Guest Fee ({{ (int)$registration->guests_count }} &times; {{ number_format($convocationSettings->guest_fee_per_person ?? 5000) }})
+                                                Guest Fee ({{ $guestsCount }} &times; PKR {{ number_format($guestFee) }})
                                                 <small class="d-block text-muted" style="font-size: 0.64rem;">({{ $convocationSettings->guest_eligibility_notice ?? 'Parents/Siblings only' }})</small>
                                             </td>
                                             <td class="text-end font-monospace">
-                                                {{ number_format((int)$registration->guests_count * ($convocationSettings->guest_fee_per_person ?? 5000)) }}
+                                                {{ number_format($guestsTotal) }}
                                             </td>
                                         </tr>
                                         <tr style="background: #f8fafb; font-weight: bold;">
                                             <td>Total Fee Payable:</td>
                                             <td class="text-end font-monospace" style="font-size: 0.82rem; color: #0b4f6c;">
-                                                {{ number_format($registration->fee_amount) }}
+                                                {{ number_format($totalPayable) }}
                                             </td>
                                         </tr>
                                     </tbody>
@@ -511,7 +520,7 @@
                                 <small class="text-muted text-xxs d-block mt-1">
                                     Amount in words: <strong>
                                         @php
-                                            $totalAmt = (int)$registration->fee_amount;
+                                            $totalAmt = (int)$totalPayable;
                                             $amtWords = '';
                                             if (class_exists('\NumberFormatter')) {
                                                 try {

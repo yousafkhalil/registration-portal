@@ -40,12 +40,15 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/students', [AdminController::class, 'students'])->name('students');
     Route::get('/students/{id}', [AdminController::class, 'show'])->name('students.show');
     Route::post('/students/{id}/approve', [AdminController::class, 'approvePayment'])->name('students.approve');
+    Route::post('/students/{id}/pending', [AdminController::class, 'markPendingPayment'])->name('students.pending');
     Route::post('/students/{id}/reject', [AdminController::class, 'rejectPayment'])->name('students.reject');
+    Route::post('/students/{id}/status', [AdminController::class, 'updateStatus'])->name('students.status');
     Route::post('/students/{id}/update-fee', [AdminController::class, 'updateFeeStructure'])->name('students.updateFee');
 
     // Convocation Master Settings & Focal Persons (Database Configuration)
     Route::get('/settings', [AdminController::class, 'settings'])->name('settings');
     Route::post('/settings', [AdminController::class, 'updateSettings'])->name('settings.update');
+    Route::get('/focal-persons/{id}', [AdminController::class, 'getFocalPerson'])->name('focalPersons.get');
     Route::post('/focal-persons', [AdminController::class, 'saveFocalPerson'])->name('focalPersons.save');
     Route::delete('/focal-persons/{id}', [AdminController::class, 'deleteFocalPerson'])->name('focalPersons.delete');
 });

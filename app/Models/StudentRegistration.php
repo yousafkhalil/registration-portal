@@ -120,15 +120,31 @@ class StudentRegistration extends Model
 
         $guestsCount = (int)$this->guests_count;
         $guestsTotal = $guestsCount * $guestFeePerPerson;
-        $total = $baseFee + $guestsTotal;
+        $standardTotal = $baseFee + $guestsTotal;
+
+        // If unpaid, fee is dynamically calculated: base + (guests * perGuest)
+        // Only if an explicit discount/waiver/concession is recorded in admin_notes, honor an overridden fee_amount
+        $hasCustomWaiver = !empty($this->admin_notes) && preg_match('/(discount|waiver|concession|custom fee)/i', $this->admin_notes);
+
+        if ($this->payment_status === 'paid' && $this->fee_amount > 0) {
+            $total = (float)$this->fee_amount;
+            $baseFee = max(0, $total - $guestsTotal);
+        } elseif ($hasCustomWaiver && $this->fee_amount > 0) {
+            // Admin gave an explicit custom concession/waiver recorded in notes
+            $total = (float)$this->fee_amount;
+            $baseFee = max(0, $total - $guestsTotal);
+        } else {
+            // Standard dynamic calculation: Base Fee + (Guests * Guest Fee)
+            $total = $standardTotal;
+        }
 
         return [
             'base_registration_fee' => $baseFee,
             'guest_fee_per_person'  => $guestFeePerPerson,
             'guests_count'          => $guestsCount,
             'guests_total_fee'      => $guestsTotal,
-            'total_fee'             => (float)($this->fee_amount > 0 ? $this->fee_amount : $total),
-            'formatted_total'       => number_format((float)($this->fee_amount > 0 ? $this->fee_amount : $total)),
+            'total_fee'             => $total,
+            'formatted_total'       => number_format($total),
         ];
     }
 
